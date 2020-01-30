@@ -5,6 +5,8 @@ import jwt	# pip install pyjwt
 from datetime import datetime as date
 from setting import GHOST_ADMIN_API_TOKEN
 from setting import GHOST_ADMIN_URL
+from googletrans import Translator
+translator = Translator()
 # Admin API key goes here
 key = GHOST_ADMIN_API_TOKEN
 
@@ -28,6 +30,33 @@ token = jwt.encode(payload, bytes.fromhex(secret), algorithm='HS256', headers=he
 url = GHOST_ADMIN_URL+'/posts/'
 headers = {'Authorization': 'Ghost {}'.format(token.decode())}
 def send_post(post):
-	body = {'posts': [{'title': post['title'], 'mobiledoc': post['mobiledoc'], 'html': post['html'], 'plaintext': post['plaintext'], 'feature_image': post['feature_image'], 'custom_excerpt': post['custom_excerpt'], 'status' :'draft'}]}
+	title = ''
+	mobiledoc = ''
+	html = ''
+	plaintext = ''
+	feature_image = ''
+	custom_excerpt = ''
+	if post['title']:
+		title=translator.translate(post['title'], src='en', dest='ru').text
+	if post['mobiledoc']:
+		mobiledoc=post['mobiledoc']
+	if post['html']:
+		html=translator.translate(post['html'], src='en', dest='ru').text
+	if post['plaintext']:
+		plaintext=translator.translate(post['plaintext'], src='en', dest='ru').text
+	if post['feature_image']:
+		feature_image=post['feature_image']
+	if post['custom_excerpt']:
+		custom_excerpt= translator.translate(post['custom_excerpt'], src='en', dest='ru').text 
+	status='draft'
+	body = {'posts': [
+		{'title':  title, 
+		'mobiledoc':  mobiledoc, 
+		'html':  html, 
+		'plaintext':  plaintext, 
+		'feature_image': feature_image, 
+		'custom_excerpt':  custom_excerpt, 
+		'status' : status}]}
+	print(body)
 	r = requests.post(url, json=body, headers=headers)
 	return r
