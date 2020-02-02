@@ -1,11 +1,14 @@
 from flask import Flask
+
 app = Flask(__name__)
-import requests # pip install requests
-import jwt	# pip install pyjwt
+import requests  # pip install requests
+import jwt  # pip install pyjwt
 from datetime import datetime as date
 from setting import GHOST_ADMIN_API_TOKEN
 from setting import GHOST_ADMIN_URL
 from googletrans import Translator
+import re, json
+
 translator = Translator()
 # Admin API key goes here
 key = GHOST_ADMIN_API_TOKEN
@@ -27,36 +30,38 @@ payload = {
 token = jwt.encode(payload, bytes.fromhex(secret), algorithm='HS256', headers=header)
 
 # Make an authenticated request to create a post
-url = GHOST_ADMIN_URL+'/posts/'
+url = GHOST_ADMIN_URL + '/posts/'
 headers = {'Authorization': 'Ghost {}'.format(token.decode())}
+
+
 def send_post(post):
-	title = ''
-	mobiledoc = ''
-	html = ''
-	plaintext = ''
-	feature_image = ''
-	custom_excerpt = ''
-	if post['title']:
-		title=translator.translate(post['title'], src='en', dest='ru').text
-	if post['mobiledoc']:
-		mobiledoc=post['mobiledoc']
-	if post['html']:
-		html=translator.translate(post['html'], src='en', dest='ru').text
-	if post['plaintext']:
-		plaintext=translator.translate(post['plaintext'], src='en', dest='ru').text
-	if post['feature_image']:
-		feature_image=post['feature_image']
-	if post['custom_excerpt']:
-		custom_excerpt= translator.translate(post['custom_excerpt'], src='en', dest='ru').text 
-	status='draft'
-	body = {'posts': [
-		{'title':  title, 
-		'mobiledoc':  mobiledoc, 
-		'html':  html, 
-		'plaintext':  plaintext, 
-		'feature_image': feature_image, 
-		'custom_excerpt':  custom_excerpt, 
-		'status' : status}]}
-	print(body)
-	r = requests.post(url, json=body, headers=headers)
-	return r
+    title = ""
+    mobiledoc = ''
+    feature_image = ''
+    custom_excerpt = ''
+    if post['title']:
+        title = translator.translate(post['title'], src='en', dest='ru').text
+    if post['mobiledoc']:
+        i = 0
+        mobiledoc = json.loads(post['mobiledoc'])
+        for p in mobiledoc['sections']:
+            j = 0
+            for block in p[2]:
+                mobiledoc['sections'][i][2][j][3] = translator.translate(block[3], src='en', dest='ru').text
+                j = j + 1
+            i = i + 1
+        mobiledoc = json.dumps(mobiledoc)
+    if post['feature_image']:
+        feature_image = post['feature_image']
+    if post['custom_excerpt']:
+        custom_excerpt = translator.translate(post['custom_excerpt'], src='en', dest='ru').text
+    status = 'draft'
+    body = {'posts': [
+        {'title': title,
+         'mobiledoc': mobiledoc,
+         'feature_image': feature_image,
+         'custom_excerpt':  custom_excerpt,
+         'status': status}]}
+    print(body)
+    r = requests.post(url, json=body, headers=headers)
+    return r
