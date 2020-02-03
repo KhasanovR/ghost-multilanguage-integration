@@ -34,9 +34,9 @@ def translate_post():
 
 
 def get_translations():
-    post_id = json.loads(request.data)['id']
+    post_slug = json.loads(request.data)['slug']
     db.connect()
-    translation = (Translation.get(Translation.post_id == post_id))
+    translation = (Translation.get(Translation.post_slug == post_slug))
     original_post = translation.o_post
     translations = original_post.translations
     db.close()
