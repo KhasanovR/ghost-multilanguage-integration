@@ -6,6 +6,6 @@ if __name__ == '__main__':
 
     # Create the tables.
     db.connect()
-    db.create_tables([Translation])
+    print(db.create_tables([Translation]))
     db.close()
     app.run(debug=True)
